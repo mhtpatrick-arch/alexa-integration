@@ -45,3 +45,64 @@ cd alexa-local-llm-assistant
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
+
+
+2. Configure LM Studio
+Open LM Studio and download an instruction model (e.g., Meta-Llama-3.1-8B-Instruct-GGUF).
+
+Go to the Local Server tab (<-> icon).
+
+Ensure port is set to 1234 and click Start Server.
+
+3. Start the Ingress Tunnel
+Authenticate Ngrok and claim your free static domain from your Ngrok dashboard:
+
+ngrok config add-authtoken <YOUR_NGROK_AUTHTOKEN>
+ngrok http 8000 --url=https://<YOUR-STATIC-DOMAIN>.ngrok-free.dev
+
+
+4. Start the FastAPI Middleware
+In a new terminal window:
+
+Bash
+source .venv/bin/activate
+uvicorn app.main:app --host 127.0.0.1 --port 8000
+5. Configure Alexa Skills Kit (ASK)
+Go to the Alexa Developer Console.
+
+Create a new skill: Local Assistant -> Custom -> Provision your own.
+
+Under Interaction Model -> JSON Editor, import alexa_skill_model/interaction_model.json and click Build Model.
+
+Under Endpoint -> HTTPS:
+
+Set Default Region to: https://<YOUR-STATIC-DOMAIN>.ngrok-free.dev/alexa
+
+Select: "My development endpoint is a sub-domain of a domain that has a wildcard certificate from a certificate authority."
+
+Click Save Endpoints.
+
+Daily Life Tracking & Usage
+Continuous Chat
+Say:
+
+"Alexa, open Local Assistant."
+
+"Tell me three facts about Mars."
+
+(Wait for answer)
+
+"What is its largest volcano?" (No need to repeat "Alexa" or the invocation).
+
+Habit & Note Tracking
+"Alexa, ask Local Assistant to note that I completed my workout and drank 3 liters of water."
+
+The agent parses this and writes a timestamped record directly into local SQLite assistant_memory.db.
+
+Latency & Alexa's 8-Second Deadline
+Alexa enforces a strict 8-second response ceiling:
+
+Stick to 7B-8B quantized models (Q4_K_M or Q8_0) to maintain sub-2-second Time-To-First-Token (TTFT).
+
+The middleware automatically caps rolling context history to the last 6 turns to avoid context-length inference bottlenecks.
+
