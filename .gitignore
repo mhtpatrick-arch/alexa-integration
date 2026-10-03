@@ -1,0 +1,6 @@
+.venv/
+__pycache__/
+*.pyc
+assistant_memory.db
+.DS_Store
+.env
